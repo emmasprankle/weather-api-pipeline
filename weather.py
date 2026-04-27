@@ -13,7 +13,7 @@ def save_weather(df, path="weather_data.csv"):
 
 
 if __name__ == "__main__":
-    API_KEY = "6f318ef78cb244299b1175138261304"
+    API_KEY = os.environ["WEATHERAPI_KEY"]
 
     api_url = "https://api.weatherapi.com/v1/forecast.json"
 
@@ -64,6 +64,7 @@ if __name__ == "__main__":
                 "max_temp_f": day["day"]["maxtemp_f"],
                 "min_temp_f": day["day"]["mintemp_f"],
                 "condition": day["day"]["condition"]["text"],
+                "run_date": date.today().isoformat(),
             })
 
         print(f"{zip_code} - {city}: 7-day forecast loaded")
@@ -74,5 +75,5 @@ if __name__ == "__main__":
     print(df.to_string(index=False))
     print(f"\nShape: {df.shape[0]} rows x {df.shape[1]} columns")
 
-    df.to_csv("weather_data.csv", index=False)
-    print("Saved to weather_data.csv")
+    save_weather(df)
+    print("Appended to weather_data.csv")

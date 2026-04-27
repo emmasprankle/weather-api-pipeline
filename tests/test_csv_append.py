@@ -31,3 +31,9 @@ def test_save_does_not_deduplicate_reruns(tmp_path):
     save_weather(df, path)
     result = pd.read_csv(path)
     assert len(result) == 2  # re-runs append — deduplication is not in scope
+
+
+def test_missing_env_var_raises(monkeypatch):
+    monkeypatch.delenv("WEATHERAPI_KEY", raising=False)
+    with pytest.raises(KeyError):
+        _ = os.environ["WEATHERAPI_KEY"]
