@@ -13,7 +13,7 @@ def save_weather(df, path="weather_data.csv"):
 
 
 if __name__ == "__main__":
-    API_KEY = os.environ["WEATHERAPI_KEY"]
+    API_KEY = os.getenv("WEATHER_API_KEY")
 
     api_url = "https://api.weatherapi.com/v1/forecast.json"
 

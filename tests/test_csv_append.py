@@ -33,8 +33,7 @@ def test_save_does_not_deduplicate_reruns(tmp_path):
     assert len(result) == 2  # re-runs append — deduplication is not in scope
 
 
-def test_missing_env_var_raises(monkeypatch):
-    monkeypatch.delenv("WEATHERAPI_KEY", raising=False)
-    with pytest.raises(KeyError):
-        _ = os.environ["WEATHERAPI_KEY"]
+def test_missing_env_var_returns_none(monkeypatch):
+    monkeypatch.delenv("WEATHER_API_KEY", raising=False)
+    assert os.getenv("WEATHER_API_KEY") is None
 

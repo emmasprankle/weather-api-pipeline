@@ -11,7 +11,7 @@ Automate the daily execution of `weather.py` using GitHub Actions, appending eac
 
 Two components:
 
-1. **`weather.py` (modified)** — reads the API key from the `WEATHERAPI_KEY` environment variable instead of a hardcoded string. Adds a `run_date` column to each row. On save, checks if `weather_data.csv` already exists; if so, reads it and concatenates new rows before writing. If not, writes fresh.
+1. **`weather.py` (modified)** — reads the API key from the `WEATHER_API_KEY` environment variable instead of a hardcoded string. Adds a `run_date` column to each row. On save, checks if `weather_data.csv` already exists; if so, reads it and concatenates new rows before writing. If not, writes fresh.
 
 2. **`.github/workflows/weather_schedule.yml` (new)** — GitHub Actions workflow that triggers daily at noon UTC and on manual dispatch. Checks out the repo, sets up Python 3.12, installs dependencies, runs `weather.py`, then commits and pushes the updated CSV if changes are detected.
 
@@ -46,7 +46,7 @@ jobs:
       - run: pip install requests pandas
       - run: python weather.py
         env:
-          WEATHERAPI_KEY: ${{ secrets.WEATHERAPI_KEY }}
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -56,7 +56,7 @@ jobs:
 
 ## weather.py Changes
 
-- Replace hardcoded `API_KEY` with `os.environ["WEATHERAPI_KEY"]`
+- Replace hardcoded `API_KEY` with `os.getenv("WEATHER_API_KEY")`
 - Add `run_date` column (today's date) to each result row
 - On CSV save: if file exists, read → concat → write; otherwise write fresh
 
@@ -64,7 +64,7 @@ jobs:
 
 | Secret name      | Where to add                                      | Value          |
 |------------------|---------------------------------------------------|----------------|
-| `WEATHERAPI_KEY` | GitHub repo → Settings → Secrets → Actions       | Your API key   |
+| `WEATHER_API_KEY` | GitHub repo → Settings → Secrets → Actions       | Your API key   |
 
 ## Run Cadence
 
@@ -95,7 +95,7 @@ If the CSV already contains today's `run_date` (e.g., a manual re-run on the sam
 
 | Failure cause                  | Behavior                                                        |
 |--------------------------------|-----------------------------------------------------------------|
-| API key missing or invalid     | `os.environ["WEATHERAPI_KEY"]` raises `KeyError` → non-zero exit |
+| API key missing or invalid     | `os.getenv("WEATHER_API_KEY")` returns `None` → API auth error → non-zero exit |
 | WeatherAPI returns error JSON  | `data["forecast"]` raises `KeyError` → non-zero exit            |
 | Network timeout                | `requests.get` raises exception → non-zero exit                 |
 | Git push fails                 | Workflow step fails → non-zero exit                             |
@@ -106,6 +106,6 @@ In all cases: the CSV is **not written** (failure happens before or instead of t
 
 | Secret name      | Where it lives                                          | How it's used                                      |
 |------------------|---------------------------------------------------------|----------------------------------------------------|
-| `WEATHERAPI_KEY` | GitHub repo → Settings → Secrets and variables → Actions | Injected as `WEATHERAPI_KEY` env var at runtime   |
+| `WEATHER_API_KEY` | GitHub repo → Settings → Secrets and variables → Actions | Injected as `WEATHER_API_KEY` env var at runtime   |
 
-The key is **never** stored in code or committed to the repo. `weather.py` reads it exclusively via `os.environ["WEATHERAPI_KEY"]`. The secret is only visible to Actions runs on the `main` branch — it cannot be read from pull requests opened by forks.
+The key is **never** stored in code or committed to the repo. `weather.py` reads it exclusively via `os.getenv("WEATHER_API_KEY")`. The secret is only visible to Actions runs on the `main` branch — it cannot be read from pull requests opened by forks.

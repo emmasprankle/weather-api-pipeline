@@ -152,10 +152,9 @@ git commit -m "feat: extract save_weather with append logic and add tests"
 Add this test to `tests/test_csv_append.py`:
 
 ```python
-def test_missing_env_var_raises(monkeypatch):
-    monkeypatch.delenv("WEATHERAPI_KEY", raising=False)
-    with pytest.raises(KeyError):
-        _ = os.environ["WEATHERAPI_KEY"]
+def test_missing_env_var_returns_none(monkeypatch):
+    monkeypatch.delenv("WEATHER_API_KEY", raising=False)
+    assert os.getenv("WEATHER_API_KEY") is None
 ```
 
 - [ ] **Step 2: Run to verify it passes already**
@@ -177,7 +176,7 @@ API_KEY = "6f318ef78cb244299b1175138261304"
 Replace with:
 
 ```python
-API_KEY = os.environ["WEATHERAPI_KEY"]
+API_KEY = os.getenv("WEATHER_API_KEY")
 ```
 
 - [ ] **Step 4: Add run_date to each result row**
@@ -230,7 +229,7 @@ print("Appended to weather_data.csv")
 - [ ] **Step 6: Verify the script runs locally**
 
 ```bash
-WEATHERAPI_KEY=6f318ef78cb244299b1175138261304 python weather.py
+WEATHER_API_KEY=6f318ef78cb244299b1175138261304 python weather.py
 ```
 
 Expected: script runs, prints 20 city lines, prints table, prints "Appended to weather_data.csv". Run it a second time and verify `weather_data.csv` now has 120 rows.
@@ -301,7 +300,7 @@ jobs:
       - name: Run weather script
         run: python weather.py
         env:
-          WEATHERAPI_KEY: ${{ secrets.WEATHERAPI_KEY }}
+          WEATHER_API_KEY: ${{ secrets.WEATHER_API_KEY }}
 
       - name: Commit updated CSV
         run: |
