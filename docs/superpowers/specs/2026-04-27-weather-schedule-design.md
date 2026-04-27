@@ -66,8 +66,46 @@ jobs:
 |------------------|---------------------------------------------------|----------------|
 | `WEATHERAPI_KEY` | GitHub repo → Settings → Secrets → Actions       | Your API key   |
 
-## Error Handling
+## Run Cadence
 
-- API errors or missing env var cause a non-zero exit → Actions run marked failed
-- GitHub sends default failure email to repo watchers
-- No partial writes: the CSV is only updated after all 20 cities fetch successfully
+| Trigger type | Schedule               | Notes                                      |
+|--------------|------------------------|--------------------------------------------|
+| Scheduled    | Daily at 12:00 UTC     | Cron expression: `0 12 * * *`              |
+| Manual       | On demand              | Via `workflow_dispatch` in the Actions tab |
+
+GitHub Actions may delay scheduled runs by up to a few minutes under high load — this is expected and acceptable.
+
+## Manual vs. Scheduled Triggers
+
+**Scheduled trigger** (`schedule`) fires automatically every day at noon UTC. It is the normal production path and requires no human action once the workflow is merged.
+
+**Manual trigger** (`workflow_dispatch`) allows anyone with repo write access to run the workflow on demand from the Actions tab. Use cases: backfilling a missed day, testing after a code change, or verifying the secret is configured correctly. Manual runs behave identically to scheduled runs — same script, same append logic, same commit step.
+
+## Success Criteria
+
+A run is considered successful when all of the following are true:
+
+1. `weather.py` exits with code 0 (all 20 zip code requests returned valid forecast data)
+2. `weather_data.csv` has been updated with exactly 60 new rows (20 cities × 3 forecast days)
+3. The updated CSV has been committed and pushed to `main` with a `chore: daily weather update YYYY-MM-DD` message
+
+If the CSV already contains today's `run_date` (e.g., a manual re-run on the same day), `git diff` will detect no change and no commit is made — this is also a success.
+
+## Failure Handling
+
+| Failure cause                  | Behavior                                                        |
+|--------------------------------|-----------------------------------------------------------------|
+| API key missing or invalid     | `os.environ["WEATHERAPI_KEY"]` raises `KeyError` → non-zero exit |
+| WeatherAPI returns error JSON  | `data["forecast"]` raises `KeyError` → non-zero exit            |
+| Network timeout                | `requests.get` raises exception → non-zero exit                 |
+| Git push fails                 | Workflow step fails → non-zero exit                             |
+
+In all cases: the CSV is **not written** (failure happens before or instead of the write step), the Actions run is marked **failed**, and GitHub emails the default failure notification to repository watchers. No alerting beyond that is configured — check the Actions tab if data stops updating.
+
+## Credentials
+
+| Secret name      | Where it lives                                          | How it's used                                      |
+|------------------|---------------------------------------------------------|----------------------------------------------------|
+| `WEATHERAPI_KEY` | GitHub repo → Settings → Secrets and variables → Actions | Injected as `WEATHERAPI_KEY` env var at runtime   |
+
+The key is **never** stored in code or committed to the repo. `weather.py` reads it exclusively via `os.environ["WEATHERAPI_KEY"]`. The secret is only visible to Actions runs on the `main` branch — it cannot be read from pull requests opened by forks.
