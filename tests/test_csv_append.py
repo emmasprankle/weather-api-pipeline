@@ -37,3 +37,4 @@ def test_missing_env_var_raises(monkeypatch):
     monkeypatch.delenv("WEATHERAPI_KEY", raising=False)
     with pytest.raises(KeyError):
         _ = os.environ["WEATHERAPI_KEY"]
+
