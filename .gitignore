@@ -208,6 +208,3 @@ __marimo__/
 
 # Claude Code
 .claude/
-
-# Local data files
-weather_data.csv

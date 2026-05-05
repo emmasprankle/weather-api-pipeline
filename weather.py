@@ -3,6 +3,7 @@ import requests
 import time
 import pandas as pd
 from datetime import date
+from dotenv import load_dotenv
 
 
 def save_weather(df, path="weather_data.csv"):
@@ -13,6 +14,7 @@ def save_weather(df, path="weather_data.csv"):
 
 
 if __name__ == "__main__":
+    load_dotenv()
     API_KEY = os.getenv("WEATHER_API_KEY")
 
     api_url = "https://api.weatherapi.com/v1/forecast.json"
